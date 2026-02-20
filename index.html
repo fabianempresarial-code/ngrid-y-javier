@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClOanis - Crea tu Recuerdo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #d4a7b7; --primary-hover: #c090a0; --bg: #fdfafc; --text: #333; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+        
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 5%; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--primary); text-decoration: none; font-weight: 700; }
+        
+        /* HERO SECTION */
+        .hero { text-align: center; padding: 40px 20px; max-width: 900px; margin: 0 auto; }
+        .hero h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: var(--primary); margin-bottom: 20px; }
+        .main-photo { width: 100%; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px; }
+
+        /* GENERADOR SECTION */
+        .generator-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); margin: 20px auto; max-width: 500px; }
+        input[type="text"] { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; margin-bottom: 15px; box-sizing: border-box; }
+        
+        .file-label { display: block; background: var(--bg); padding: 15px; border: 2px dashed #ccc; border-radius: 10px; cursor: pointer; font-weight: 600; margin-bottom: 15px; }
+        
+        /* CANVAS CONTAINER */
+        #canvas-container { position: relative; width: 100%; cursor: move; display: none; overflow: hidden; border-radius: 10px; border: 1px solid #ddd; }
+        canvas { width: 100%; display: block; }
+        .instruction-tag { font-size: 0.8rem; color: #888; margin-top: 5px; display: none; }
+
+        /* BOTONES */
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { padding: 15px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-main { background: var(--primary); color: white; width: 100%; margin-top: 15px; }
+        .btn-share { background: #555; color: white; }
+        .btn-zoom { background: #eee; color: #333; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <a href="#" class="logo">ClOanis</a>
+    </header>
+
+    <main class="hero">
+        <h1>¡Celebremos nuestro amor!</h1>
+        <img src="https://i.imgur.com/gK9Cq4N.jpg" class="main-photo" alt="Novios">
+
+        <div class="generator-card" id="herramienta">
+            <h2>Crea tu recuerdo</h2>
+            <p>Escribe tu nombre, sube tu foto y arrástrala para ajustarla.</p>
+            
+            <input type="text" id="userName" placeholder="Tu nombre..." maxlength="20">
+            
+            <label for="upload" class="file-label" id="labelBtn">📁 Elegir mi foto</label>
+            <input type="file" id="upload" accept="image/*" style="display:none">
+
+            <div id="canvas-container">
+                <canvas id="canvas"></canvas>
+            </div>
+            <p class="instruction-tag" id="dragNote">↔️ Arrastra la foto para moverla</p>
+
+            <div class="controls" id="zoomControls" style="display:none">
+                <button class="btn btn-zoom" onclick="adjustZoom(0.05)">🔍 +</button>
+                <button class="btn btn-zoom" onclick="adjustZoom(-0.05)">🔍 -</button>
+            </div>
+
+            <button id="downloadBtn" class="btn btn-main" style="display:none">⬇️ Descargar Imagen</button>
+            <button id="shareBtn" class="btn btn-main btn-share" style="display:none">📤 Compartir</button>
+        </div>
+    </main>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const upload = document.getElementById('upload');
+    const userNameInput = document.getElementById('userName');
+    
+    // VARIABLES DE CONTROL
+    const MARCO_URL = 'https://i.imgur.com/7Pe9Z6p.png'; 
+    let imgUser = new Image();
+    let marco = new Image();
+    let imgReady = false;
+    let marcoReady = false;
+
+    // Variables de posición y escala
+    let posX = 0, posY = 0, scale = 1;
+    let isDragging = false, startX, startY;
+
+    // 1. CARGAR MARCO INICIAL
+    marco.crossOrigin = "anonymous";
+    marco.src = MARCO_URL;
+    marco.onload = () => { marcoReady = true; };
+
+    upload.addEventListener('change', (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            imgUser = new Image();
+            imgUser.onload = () => {
+                imgReady = true;
+                resetPosition();
+                document.getElementById('canvas-container').style.display = 'block';
+                document.getElementById('dragNote').style.display = 'block';
+                document.getElementById('downloadBtn').style.display = 'block';
+                document.getElementById('shareBtn').style.display = 'flex';
+                document.getElementById('zoomControls').style.display = 'grid';
+                draw();
+            };
+            imgUser.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    });
+
+    function resetPosition() {
+        canvas.width = marco.width;
+        canvas.height = marco.height;
+        scale = Math.max(canvas.width / imgUser.width, canvas.height / imgUser.height);
+        posX = (canvas.width - imgUser.width * scale) / 2;
+        posY = (canvas.height - imgUser.height * scale) / 2;
+    }
+
+    function draw() {
+        if (!imgReady || !marcoReady) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Dibujar foto usuario
+        ctx.drawImage(imgUser, posX, posY, imgUser.width * scale, imgUser.height * scale);
+        
+        // Dibujar marco
+        ctx.drawImage(marco, 0, 0);
+
+        // Dibujar texto
+        const nombre = userNameInput.value.trim().toUpperCase();
+        if (nombre) {
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "rgba(0,0,0,0.5)";
+            ctx.lineWidth = 6;
+            ctx.font = "bold 70px 'Inter', sans-serif";
+            ctx.textAlign = "center";
+            ctx.strokeText(nombre, canvas.width/2, canvas.height - 100);
+            ctx.fillText(nombre, canvas.width/2, canvas.height - 100);
+        }
+    }
+
+    // EVENTOS PARA MOVER (MOUSE Y TOUCH)
+    const startAction = (e) => {
+        isDragging = true;
+        startX = (e.pageX || e.touches[0].pageX) - posX;
+        startY = (e.pageY || e.touches[0].pageY) - posY;
+    };
+    const moveAction = (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        posX = (e.pageX || e.touches[0].pageX) - startX;
+        posY = (e.pageY || e.touches[0].pageY) - startY;
+        draw();
+    };
+    const stopAction = () => { isDragging = false; };
+
+    canvas.addEventListener('mousedown', startAction);
+    window.addEventListener('mousemove', moveAction);
+    window.addEventListener('mouseup', stopAction);
+    canvas.addEventListener('touchstart', startAction);
+    window.addEventListener('touchmove', moveAction);
+    window.addEventListener('touchend', stopAction);
+
+    userNameInput.addEventListener('input', draw);
+
+    function adjustZoom(delta) {
+        scale += delta;
+        draw();
+    }
+
+    // DESCARGAR
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = 'recuerdo-cloanis.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+
+    // COMPARTIR
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+        const dataUrl = canvas.toDataURL('image/png');
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], 'recuerdo.png', { type: 'image/png' });
+        
+        if (navigator.share) {
+            navigator.share({ files: [file], title: 'Mi Recuerdo ClOanis' });
+        } else {
+            alert("Tu navegador no soporta compartir directamente. ¡Descarga la imagen y súbela!");
+        }
+    });
+</script>
+</body>
+</html>
+
