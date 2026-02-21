@@ -19,20 +19,30 @@
         .main-photo { width: 100%; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px; }
 
         /* GENERADOR SECTION */
-        .generator-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); margin: 20px auto; max-width: 500px; }
-        input[type="text"] { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; margin-bottom: 15px; box-sizing: border-box; }
+        .generator-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); margin: 20px auto; max-width: 500px; text-align: left; }
+        .generator-card h2 { text-align: center; color: var(--primary); font-family: 'Playfair Display', serif; }
         
-        .file-label { display: block; background: var(--bg); padding: 15px; border: 2px dashed #ccc; border-radius: 10px; cursor: pointer; font-weight: 600; margin-bottom: 15px; }
+        label { font-weight: 600; display: block; margin-top: 15px; margin-bottom: 5px; font-size: 0.9rem; }
+        input[type="text"] { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; margin-bottom: 15px; box-sizing: border-box; font-size: 1rem; }
+        
+        /* MARCOS */
+        .frame-selector { display: flex; gap: 10px; justify-content: flex-start; margin-bottom: 20px; overflow-x: auto; padding: 10px 2px; scrollbar-width: thin; }
+        .frame-thumb { width: 70px; height: 70px; border-radius: 8px; cursor: pointer; border: 3px solid #eee; transition: 0.3s; object-fit: cover; flex-shrink: 0; }
+        .frame-thumb.active { border-color: var(--primary); transform: scale(1.05); }
+
+        .file-label { display: block; background: #f9f9f9; padding: 20px; border: 2px dashed #ccc; border-radius: 10px; cursor: pointer; text-align: center; font-weight: 600; transition: 0.3s; }
+        .file-label:hover { border-color: var(--primary); background: #fff; }
         
         /* CANVAS CONTAINER */
-        #canvas-container { position: relative; width: 100%; cursor: move; display: none; overflow: hidden; border-radius: 10px; border: 1px solid #ddd; }
-        canvas { width: 100%; display: block; }
-        .instruction-tag { font-size: 0.8rem; color: #888; margin-top: 5px; display: none; }
+        #canvas-container { position: relative; width: 100%; cursor: move; display: none; overflow: hidden; border-radius: 10px; border: 1px solid #ddd; margin-top: 20px; touch-action: none; }
+        canvas { width: 100%; display: block; background-color: #eee; }
+        .instruction-tag { font-size: 0.8rem; color: #888; text-align: center; margin-top: 8px; display: none; }
 
         /* BOTONES */
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .btn { padding: 15px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .controls { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { padding: 15px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
         .btn-main { background: var(--primary); color: white; width: 100%; margin-top: 15px; }
+        .btn-main:hover { background: var(--primary-hover); }
         .btn-share { background: #555; color: white; }
         .btn-zoom { background: #eee; color: #333; font-size: 1.2rem; }
     </style>
@@ -48,20 +58,30 @@
         <img src="https://i.imgur.com/UTApoXx.jpeg" class="main-photo" alt="Novios">
 
         <div class="generator-card" id="herramienta">
-            <h2>Crea tu recuerdo de nuestra Boda</h2>
-            <p>Escribe tu nombre, sube tu foto y arrástrala para ajustarla.</p>
+            <h2>Crea tu recuerdo</h2>
             
-            <input type="text" id="userName" placeholder="Tu nombre..." maxlength="20">
+            <label>1. Elige un diseño:</label>
+            <div class="frame-selector" id="frameSelector">
+                <img src="https://i.imgur.com/UdEzkkV.png" class="frame-thumb active" onclick="changeFrame(this, 'https://i.imgur.com/UdEzkkV.png')">
+                <img src="https://via.placeholder.com/300/fdfafc/d4a7b7?text=Diseño+2" class="frame-thumb" onclick="changeFrame(this, 'https://via.placeholder.com/1080x1080/00000000?text=Marco+2')">
+                <img src="https://via.placeholder.com/300/fdfafc/d4a7b7?text=Diseño+3" class="frame-thumb" onclick="changeFrame(this, 'https://via.placeholder.com/1080x1080/00000000?text=Marco+3')">
+                <img src="https://via.placeholder.com/300/fdfafc/d4a7b7?text=Diseño+4" class="frame-thumb" onclick="changeFrame(this, 'https://via.placeholder.com/1080x1080/00000000?text=Marco+4')">
+                <img src="https://via.placeholder.com/300/fdfafc/d4a7b7?text=Diseño+5" class="frame-thumb" onclick="changeFrame(this, 'https://via.placeholder.com/1080x1080/00000000?text=Marco+5')">
+            </div>
+
+            <label for="userName">2. Escribe tu nombre:</label>
+            <input type="text" id="userName" placeholder="Ej. Familia Pérez..." maxlength="20">
             
-            <label for="upload" class="file-label" id="labelBtn">📁 Elegir mi foto</label>
+            <label>3. Sube tu foto:</label>
+            <label for="upload" class="file-label" id="labelBtn">📁 Toca aquí para elegir foto</label>
             <input type="file" id="upload" accept="image/*" style="display:none">
 
             <div id="canvas-container">
                 <canvas id="canvas"></canvas>
             </div>
-            <p class="instruction-tag" id="dragNote">↔️ Arrastra la foto para moverla</p>
+            <p class="instruction-tag" id="dragNote">↔️ Arrastra para mover | Usa +/- para zoom</p>
 
-            <div class="controls" id="zoomControls" style="display:none">
+            <div class="controls" id="zoomControls">
                 <button class="btn btn-zoom" onclick="adjustZoom(0.05)">🔍 +</button>
                 <button class="btn btn-zoom" onclick="adjustZoom(-0.05)">🔍 -</button>
             </div>
@@ -78,21 +98,34 @@
     const userNameInput = document.getElementById('userName');
     
     // VARIABLES DE CONTROL
-    const MARCO_URL = 'https://i.imgur.com/UdEzkkV.png'; 
-    let imgUser = new Image();
     let marco = new Image();
+    let imgUser = new Image();
     let imgReady = false;
     let marcoReady = false;
 
-    // Variables de posición y escala
+    // Estado de transformación
     let posX = 0, posY = 0, scale = 1;
-    let isDragging = false, startX, startY;
+    let isDragging = false, lastX = 0, lastY = 0;
 
-    // 1. CARGAR MARCO INICIAL
+    // 1. CARGAR MARCO POR DEFECTO
     marco.crossOrigin = "anonymous";
-    marco.src = MARCO_URL;
+    marco.src = 'https://i.imgur.com/UdEzkkV.png'; 
     marco.onload = () => { marcoReady = true; };
 
+    // CAMBIAR MARCO
+    function changeFrame(element, url) {
+        document.querySelectorAll('.frame-thumb').forEach(img => img.classList.remove('active'));
+        element.classList.add('active');
+        
+        marcoReady = false;
+        marco.src = url;
+        marco.onload = () => {
+            marcoReady = true;
+            if (imgReady) draw();
+        };
+    }
+
+    // CARGAR FOTO DE USUARIO
     upload.addEventListener('change', (e) => {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -113,57 +146,73 @@
     });
 
     function resetPosition() {
-        canvas.width = marco.width;
-        canvas.height = marco.height;
-        scale = Math.max(canvas.width / imgUser.width, canvas.height / imgUser.height);
+        canvas.width = marco.width || 1080;
+        canvas.height = marco.height || 1080;
+        const ratio = Math.max(canvas.width / imgUser.width, canvas.height / imgUser.height);
+        scale = ratio;
         posX = (canvas.width - imgUser.width * scale) / 2;
         posY = (canvas.height - imgUser.height * scale) / 2;
     }
 
     function draw() {
-        if (!imgReady || !marcoReady) return;
+        if (!marcoReady) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         // Dibujar foto usuario
-        ctx.drawImage(imgUser, posX, posY, imgUser.width * scale, imgUser.height * scale);
+        if (imgReady) {
+            ctx.drawImage(imgUser, posX, posY, imgUser.width * scale, imgUser.height * scale);
+        }
         
         // Dibujar marco
-        ctx.drawImage(marco, 0, 0);
+        ctx.drawImage(marco, 0, 0, canvas.width, canvas.height);
 
         // Dibujar texto
         const nombre = userNameInput.value.trim().toUpperCase();
         if (nombre) {
             ctx.fillStyle = "white";
-            ctx.strokeStyle = "rgba(0,0,0,0.5)";
-            ctx.lineWidth = 6;
-            ctx.font = "bold 70px 'Inter', sans-serif";
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 10;
+            ctx.font = "bold 60px 'Inter', sans-serif";
             ctx.textAlign = "center";
-            ctx.strokeText(nombre, canvas.width/2, canvas.height - 100);
-            ctx.fillText(nombre, canvas.width/2, canvas.height - 100);
+            ctx.fillText(nombre, canvas.width/2, canvas.height - 110);
+            ctx.shadowBlur = 0;
         }
     }
 
-    // EVENTOS PARA MOVER (MOUSE Y TOUCH)
-    const startAction = (e) => {
-        isDragging = true;
-        startX = (e.pageX || e.touches[0].pageX) - posX;
-        startY = (e.pageY || e.touches[0].pageY) - posY;
+    // MOVIMIENTO (MOUSE & TOUCH)
+    const getPointerPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
     };
+
+    const startAction = (e) => {
+        if (!imgReady) return;
+        isDragging = true;
+        const pos = getPointerPos(e);
+        lastX = pos.x; lastY = pos.y;
+    };
+
     const moveAction = (e) => {
         if (!isDragging) return;
         e.preventDefault();
-        posX = (e.pageX || e.touches[0].pageX) - startX;
-        posY = (e.pageY || e.touches[0].pageY) - startY;
+        const pos = getPointerPos(e);
+        posX += (pos.x - lastX);
+        posY += (pos.y - lastY);
+        lastX = pos.x; lastY = pos.y;
         draw();
     };
-    const stopAction = () => { isDragging = false; };
 
     canvas.addEventListener('mousedown', startAction);
     window.addEventListener('mousemove', moveAction);
-    window.addEventListener('mouseup', stopAction);
-    canvas.addEventListener('touchstart', startAction);
-    window.addEventListener('touchmove', moveAction);
-    window.addEventListener('touchend', stopAction);
+    window.addEventListener('mouseup', () => isDragging = false);
+    canvas.addEventListener('touchstart', startAction, {passive: false});
+    window.addEventListener('touchmove', moveAction, {passive: false});
+    window.addEventListener('touchend', () => isDragging = false);
 
     userNameInput.addEventListener('input', draw);
 
@@ -175,24 +224,24 @@
     // DESCARGAR
     document.getElementById('downloadBtn').addEventListener('click', () => {
         const link = document.createElement('a');
-        link.download = 'recuerdo-cloanis.png';
+        link.download = 'recuerdo-boda.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
     });
 
     // COMPARTIR
     document.getElementById('shareBtn').addEventListener('click', async () => {
-        const dataUrl = canvas.toDataURL('image/png');
-        const blob = await (await fetch(dataUrl)).blob();
-        const file = new File([blob], 'recuerdo.png', { type: 'image/png' });
-        
-        if (navigator.share) {
-            navigator.share({ files: [file], title: 'Mi Recuerdo ClOanis' });
-        } else {
-            alert("Tu navegador no soporta compartir directamente. ¡Descarga la imagen y súbela!");
-        }
+        try {
+            const dataUrl = canvas.toDataURL('image/png');
+            const blob = await (await fetch(dataUrl)).blob();
+            const file = new File([blob], 'recuerdo.png', { type: 'image/png' });
+            if (navigator.share) {
+                await navigator.share({ files: [file], title: 'Mi Recuerdo de Boda' });
+            } else {
+                alert("Navegador no compatible. ¡Usa el botón descargar!");
+            }
+        } catch (err) { console.error(err); }
     });
 </script>
 </body>
 </html>
-
